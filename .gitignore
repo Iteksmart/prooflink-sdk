@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.tox/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Local test artifacts
+.firecrawl/
+*.local.json

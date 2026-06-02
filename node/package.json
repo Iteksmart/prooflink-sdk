@@ -1,0 +1,48 @@
+{
+  "name": "@itechsmart/prooflink",
+  "version": "0.1.0",
+  "description": "Cryptographic receipt SDK for autonomous AI actions",
+  "main": "index.js",
+  "module": "index.mjs",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "require": "./index.js",
+      "types": "./index.d.ts"
+    }
+  },
+  "files": [
+    "index.js",
+    "index.mjs",
+    "index.d.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "prooflink",
+    "cryptography",
+    "audit",
+    "autonomous-ai",
+    "receipts",
+    "bitcoin",
+    "opentimestamps",
+    "hash-chain"
+  ],
+  "author": "iTechSmart Inc.",
+  "license": "MIT",
+  "homepage": "https://github.com/Iteksmart/prooflink-sdk",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Iteksmart/prooflink-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Iteksmart/prooflink-sdk/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,30 @@
+name: Test ProofLink SDK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Run Node smoke tests
+        run: node node/test.js
+
+  test-python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Install Python deps
+        run: pip install requests
+      - name: Run Python smoke tests
+        run: python3 python/tests/test_client.py
