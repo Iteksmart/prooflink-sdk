@@ -1,4 +1,4 @@
-"""ProofLink Receipt Standard v1.0 — reference verification (Python).
+"""ProofLink Receipt Standard v3.0 — reference verification (Python).
 
 Cryptographically verifies a ProofLink v3 receipt, reproducing the LIVE
 verification at https://verify.itechsmart.dev/api/how-to-verify exactly:
@@ -26,7 +26,7 @@ try:
 except Exception:  # pragma: no cover
     _HAVE_CRYPTO = False
 
-# The three computed fields excluded from canonical_bytes (Standard v1 §4).
+# The three computed fields excluded from canonical_bytes (Standard v3 §3).
 EXCLUDE = ("canonical_bytes", "signature", "hash_sha256")
 
 # Published production signing key (cross-check /api/how-to-verify).
@@ -36,7 +36,7 @@ SCHEMA_V3 = "3.0"
 
 
 def canonicalize(payload: Mapping[str, Any]) -> bytes:
-    """Canonical bytes per Standard v1 §4: sorted keys, no whitespace, UTF-8,
+    """Canonical bytes per Standard v3 §3: sorted keys, no whitespace, UTF-8,
     non-ASCII left literal (ensure_ascii=False)."""
     return json.dumps(payload, sort_keys=True, separators=(",", ":"),
                       ensure_ascii=False).encode("utf-8")
@@ -71,7 +71,7 @@ def verify_receipt(receipt: Mapping[str, Any],
     schema = str(receipt.get("schema_version", ""))
     if schema != SCHEMA_V3:
         errors.append(
-            f"schema_version is {schema!r}; Standard v1.0 normatively covers "
+            f"schema_version is {schema!r}; Standard v3.0 normatively covers "
             f'"3.0" (v1/v2 are legacy, not recomputable)')
         return {"valid": False, "id": receipt.get("id", ""),
                 "schema_version": schema,

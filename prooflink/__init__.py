@@ -21,7 +21,7 @@ import subprocess
 import urllib.request
 from typing import Any, Optional
 
-# Reference cryptographic verification (ProofLink Receipt Standard v1.0).
+# Reference cryptographic verification (ProofLink Receipt Standard v3.0).
 from .crypto import (  # noqa: E402
     verify_receipt,
     verify,

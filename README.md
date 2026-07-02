@@ -1,11 +1,59 @@
 # ProofLink SDK
 
-> Cryptographic receipts for autonomous AI actions.
+> **Every other AI-accountability standard is a PDF. ProofLink is a running ledger of
+> 79,000+ cryptographically-sealed AI actions you can verify right now — not a spec, a
+> live chain.** → **[verify.itechsmart.dev](https://verify.itechsmart.dev)**
 
-Every autonomous action gets a receipt. **SHA-256 hash-chained, Bitcoin-anchored, publicly verifiable** at [verify.itechsmart.dev](https://verify.itechsmart.dev).
+Seal + verify [ProofLink Receipt Standard **v3.0**](https://github.com/Iteksmart/prooflink-standard/blob/main/ProofLink-Receipt-Standard-v3.md)
+receipts from Python or TypeScript. Every autonomous action gets a receipt: **SHA-256
+hash-chained, Ed25519-signed, Bitcoin-anchored, publicly verifiable.** *Don't trust the AI —
+trust the math.*
 
 [![Test](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Not a spec — a running chain
+
+Live snapshot (2026-07-02, from `/api/chain` + `/api/stats`): **79,000+ receipts**, chain
+**intact (`chain_intact: true`, 0 breaks)**, **2,100+ strict cryptographically-verifiable v3
+receipts** (and every new action is sealed as v3), **13,700+ Bitcoin-anchored** (~17%, growing
+daily). Verify any of it yourself with the 5-line snippet below — no iTechSmart account, no
+trust required.
+
+**Honest two-era note.** v3 receipts (`schema_version "3.0"`) are strict and fully
+cryptographically verifiable (hash + canonical re-derivation + Ed25519 + chain link). Legacy
+v1/v2 receipts are pointer-linked and preserved unmodified — disclosed openly at `/api/stats`.
+We do **not** claim all 79k are strict-verifiable; 2,100+ v3 are, and the count grows with
+every action.
+
+## Built for the regulations
+
+| Regulation / framework | ProofLink field / mechanism that satisfies it |
+|---|---|
+| **EU AI Act (Reg. 2024/1689) Article 12** — automatic tamper-evident logging for high-risk AI | Append-only hash chain; every `seal()` records `timestamp`, `actor`, `action`, `subject`, `outcome`, `details` |
+| **NIST AI RMF 1.0 — MEASURE 2.7 / MANAGE 4.1** — monitoring evaluated & documented | `security` / `platform_fix` / `platform_health_check` receipts, signed & immutable; `actor` distinguishes system vs. agent vs. operator |
+| **CMMC L2 — AU.L2-3.3.1 / AU.L2-3.3.8** — retain & protect audit logs | SHA-256 chain + Ed25519 make any edit/deletion/reorder detectable; Bitcoin anchoring adds external existence proof |
+| **SOC 2 — CC7.2 / CC7.3 / CC8.1** — anomaly monitoring & change management | `signal_classified` / `security` receipts; `config_change` records `{before_hash, after_hash, diff_summary}` |
+| **ISO/IEC 42001:2023 — Clause 9.1** — retain documented monitoring evidence | The receipt ledger is the retained cryptographic evidence; `compliance_tags` seal the control claim inside the signature |
+
+## Connect anything — every call seals a receipt
+
+- **MCP server** — verify/search receipts from any MCP client (Claude, Cursor, Copilot,
+  LangGraph, CrewAI): `prooflink_verify_receipt`, `prooflink_search_receipts`,
+  `prooflink_verify_chain`.
+- **FastAPI / REST** — `verify.itechsmart.dev` exposes `/api/export`, `/api/verify/<id>`,
+  `/api/chain`, `/api/stats`, `/api/anchors`, `/api/how-to-verify`.
+- **This SDK** — Python (`pip install prooflink`) and TypeScript (`npm install
+  @itechsmart/prooflink`) wrap seal + verify with idiomatic bindings.
+
+Related: the [**ProofLink Receipt Standard**](https://github.com/Iteksmart/prooflink-standard)
+(spec + conformance suite) and the zero-dependency
+[**prooflink-verifier**](https://github.com/Iteksmart/prooflink-verifier). ProofLink aligns
+conceptually with the IETF Internet-Draft
+[`draft-sharif-agent-audit-trail-00`](https://datatracker.ietf.org/doc/html/draft-sharif-agent-audit-trail-00)
+(same problem, shared hash-chain core) while differing deliberately on canonicalization
+(`json.dumps`, not RFC 8785 JCS) and signature (Ed25519, not ECDSA P-256) — see §11 of the
+standard.
 
 ## What it does
 
@@ -43,7 +91,7 @@ npm install @itechsmart/prooflink
 
 ## Quick start
 
-Conforms to the [ProofLink Receipt Standard v1.0](../prooflink-standard/ProofLink-Receipt-Standard-v1.md).
+Conforms to the [ProofLink Receipt Standard v3.0](https://github.com/Iteksmart/prooflink-standard/blob/main/ProofLink-Receipt-Standard-v3.md).
 
 ### Python — verify a receipt (5 lines)
 
