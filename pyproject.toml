@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "itechsmart-prooflink"
+version = "1.0.0"
+description = "ProofLink SDK — seal and verify cryptographically-chained, Bitcoin-anchored receipts"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "iTechSmart Inc." }]
+keywords = ["prooflink", "audit", "receipts", "bitcoin", "opentimestamps", "verifiable"]
+# verify()/verify_receipt() use Ed25519 from `cryptography` (the same library
+# as the published reference verifier). seal()/verify_chain()/recent()/stats()
+# are stdlib-only. Install the [verify] extra (or the base dep) for crypto verify.
+dependencies = ["cryptography>=41.0"]
+
+[project.scripts]
+prooflink = "prooflink.__main__:main"
+
+[tool.setuptools]
+packages = ["prooflink"]

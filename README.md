@@ -43,55 +43,56 @@ npm install @itechsmart/prooflink
 
 ## Quick start
 
-### Python
+Conforms to the [ProofLink Receipt Standard v1.0](../prooflink-standard/ProofLink-Receipt-Standard-v1.md).
+
+### Python — verify a receipt (5 lines)
+
+`verify()` reproduces the **live** verification exactly: SHA-256 hash recompute,
+canonical re-derivation, Ed25519 signature, and (optionally) the `prev_hash`
+chain link. It returns `True` only if all checks pass.
 
 ```python
-from prooflink import ProofLinkClient
-
-client = ProofLinkClient()
-
-# Seal a receipt (server mode only)
-receipt = client.seal({
-    'category': 'container_restart',
-    'actor': 'system:supervisor',
-    'subject': 'suite-nginx',
-    'action': 'restarted after OOM kill',
-    'outcome': 'service healthy 12s after restart',
-    'details': {'pid': 12345, 'oom_score': 800},
-})
-print(receipt['hash'])  # 64-char SHA-256
-print(f"https://verify.itechsmart.dev/{receipt['hash']}")
-
-# Verify any receipt by hash (any mode)
-entry = client.verify(receipt['hash'])
-
-# Chain status (any mode)
-status = client.chain_status()
-# {'chain_intact': True, 'total': 15741, 'breaks': 0}
+import prooflink
+receipt = prooflink.fetch("c58347c60394a21f")   # pull any receipt from the public API
+assert prooflink.verify(receipt)                # cryptographically verify it — True
 ```
 
-### Node
+Want the per-check breakdown? Use `verify_receipt()`:
 
-```javascript
-const { ProofLinkClient } = require('@itechsmart/prooflink')
-// or: import { ProofLinkClient } from '@itechsmart/prooflink'
-
-const client = new ProofLinkClient()
-
-const receipt = await client.seal({
-  category: 'container_restart',
-  actor: 'system:supervisor',
-  subject: 'suite-nginx',
-  action: 'restarted after OOM kill',
-  outcome: 'service healthy 12s after restart',
-  details: { pid: 12345, oomScore: 800 },
-})
-console.log(receipt.hash)
-console.log(`https://verify.itechsmart.dev/${receipt.hash}`)
-
-const status = await client.chainStatus()
-// { chain_intact: true, total: 15741, breaks: 0 }
+```python
+result = prooflink.verify_receipt(receipt, prev_hash="<previous entry hash>")
+# {'valid': True, 'id': 'c58347c60394a21f', 'schema_version': '3.0',
+#  'checks': [{'name': 'hash_integrity', 'passed': True, ...}, ...], 'errors': []}
 ```
+
+### Python — seal a receipt (server mode)
+
+`seal()` shells out to the canonical `append.py` (only available on a host that
+has `/opt/itechsmart/audit_ledger/append.py` + `SEAL_TOKEN`):
+
+```python
+import prooflink
+r = prooflink.seal("restarted suite-nginx after OOM kill",
+                   category="container_restart", actor="system:supervisor",
+                   subject="suite-nginx", outcome="healthy 12s after restart")
+print(r["id"], r["hash"])   # short form; verify with prooflink.fetch(r["id"])
+```
+
+### Node / TypeScript — verify a receipt (5 lines)
+
+See [`typescript/`](typescript/) for the TS verifier. It reproduces the same
+four checks using Node's built-in `crypto` (no runtime dependencies):
+
+```typescript
+import { verify } from "./src/index";
+const res = await fetch("https://verify.itechsmart.dev/api/verify/c58347c60394a21f");
+const { receipt } = await res.json();
+console.assert(verify(receipt));   // true
+```
+
+> `verify()`/`verify_receipt()` require the `cryptography` package (the same
+> library as the published reference verifier). `seal()`, `verify_chain()`,
+> `recent()`, and `stats()` are stdlib-only.
 
 ## Receipt schema
 

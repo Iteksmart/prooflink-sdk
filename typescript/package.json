@@ -1,0 +1,26 @@
+{
+  "name": "prooflink-sdk",
+  "version": "1.0.0",
+  "description": "ProofLink TypeScript SDK — EU AI Act Article 12 audit receipts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node test/verify.test.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "prooflink",
+    "audit",
+    "eu-ai-act",
+    "receipts"
+  ],
+  "author": "iTechSmart",
+  "license": "MIT"
+}
