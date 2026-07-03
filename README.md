@@ -1,5 +1,7 @@
 # ProofLink SDK
 
+[![CI](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/prooflink)](https://pypi.org/project/prooflink/) [![npm](https://img.shields.io/npm/v/%40itechsmart%2Fprooflink)](https://www.npmjs.com/package/@itechsmart/prooflink)
+
 > **Every other AI-accountability standard is a PDF. ProofLink is a running ledger of
 > 79,000+ cryptographically-sealed AI actions you can verify right now — not a spec, a
 > live chain.** → **[verify.itechsmart.dev](https://verify.itechsmart.dev)**
