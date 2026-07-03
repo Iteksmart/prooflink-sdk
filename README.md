@@ -12,6 +12,20 @@ trust the math.*
 [![Test](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+
+## Framework examples
+
+Drop-in accountability for your stack — each uses a published SDK and the live public ledger. See [](./examples):
+
+| Example | Stack |
+|---|---|
+| [FastAPI](./examples/fastapi) | verify endpoint +  seal decorator |
+| [Next.js](./examples/nextjs) |  route + live-integrity server component |
+| [LangGraph](./examples/langgraph) | seal a receipt for every agent node, then verify the trail |
+| [CrewAI](./examples/crewai) |  seals a receipt per completed task |
+| [Claude Desktop](./examples/claude-desktop) | MCP config — 65 tools, verify receipts from Claude |
+
+
 ## Not a spec — a running chain
 
 Live snapshot (2026-07-02, from `/api/chain` + `/api/stats`): **79,000+ receipts**, chain
