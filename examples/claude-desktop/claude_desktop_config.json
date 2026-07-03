@@ -1,0 +1,9 @@
+{
+  "//": "ProofLink × Claude Desktop — connect Claude to the iTechSmart MCP server so it can verify receipts and query the platform (65 tools). Merge this into your claude_desktop_config.json (macOS: ~/Library/Application Support/Claude/; Windows: %APPDATA%\\Claude\\). Replace <YOUR_MCP_BEARER_TOKEN>. Restart Claude Desktop.",
+  "mcpServers": {
+    "itechsmart-prooflink": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.itechsmart.dev/sse", "--header", "Authorization: Bearer <YOUR_MCP_BEARER_TOKEN>"]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "prooflink-nextjs-example",
+  "private": true,
+  "dependencies": {
+    "@itechsmart/prooflink": "^1.1.0",
+    "next": "^14",
+    "react": "^18",
+    "react-dom": "^18"
+  }
+}
