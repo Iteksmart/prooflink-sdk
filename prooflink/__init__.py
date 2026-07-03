@@ -31,7 +31,7 @@ from .crypto import (  # noqa: E402
     SCHEMA_V3,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 
 APPEND_PY = "/opt/itechsmart/audit_ledger/append.py"
 PUBLIC_VERIFY_URL = "https://verify.itechsmart.dev"

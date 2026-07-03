@@ -1,6 +1,6 @@
 {
   "name": "@itechsmart/prooflink",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "ProofLink SDK \u2014 the Trust & Accountability Layer for Autonomous AI (iTechSmart). Verify Ed25519-signed, Bitcoin-anchored receipts and fetch from the live public ledger. Zero runtime deps.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

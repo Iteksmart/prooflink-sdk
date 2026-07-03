@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prooflink"
-version = "1.1.0"
+version = "1.1.1"
 description = "ProofLink SDK — seal and verify cryptographically-chained, Bitcoin-anchored receipts"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -20,6 +20,9 @@ prooflink = "prooflink.__main__:main"
 
 [tool.setuptools]
 packages = ["prooflink"]
+
+[tool.setuptools.package-data]
+prooflink = ["py.typed"]
 
 [project.urls]
 Homepage = "https://prooflink.itechsmart.dev"

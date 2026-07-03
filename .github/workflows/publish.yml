@@ -1,7 +1,7 @@
 name: Publish
 
 # PyPI via OIDC Trusted Publishing (no stored token).
-# npm via NPM_TOKEN repo secret.
+# npm via NPM_TOKEN repo secret (job skips gracefully until the secret is set).
 on:
   release:
     types: [published]
@@ -39,7 +39,12 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm ci
       - run: npm run build
-      - name: Publish
+      - name: Publish (skips if NPM_TOKEN is not set)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN not configured — skipping npm publish. Add the repo secret to enable."
+            exit 0
+          fi
+          npm publish --access public
