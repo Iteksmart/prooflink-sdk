@@ -43,7 +43,7 @@ every action.
   `prooflink_verify_chain`.
 - **FastAPI / REST** — `verify.itechsmart.dev` exposes `/api/export`, `/api/verify/<id>`,
   `/api/chain`, `/api/stats`, `/api/anchors`, `/api/how-to-verify`.
-- **This SDK** — Python (`pip install prooflink`) and TypeScript (`npm install
+- **This SDK** — Python (`pip install prooflink  # NOT YET PUBLISHED to PyPI — build from this repo (see below)`) and TypeScript (`npm install
   @itechsmart/prooflink`) wrap seal + verify with idiomatic bindings.
 
 Related: the [**ProofLink Receipt Standard**](https://github.com/Iteksmart/prooflink-standard)
@@ -86,7 +86,7 @@ pip install prooflink
 ### Node
 
 ```bash
-npm install @itechsmart/prooflink
+npm install @itechsmart/prooflink-verifier   # published verifier (v2.x). The full @itechsmart/prooflink SDK is not yet on npm — build from this repo.
 ```
 
 ## Quick start

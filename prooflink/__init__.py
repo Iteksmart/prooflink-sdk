@@ -31,11 +31,16 @@ from .crypto import (  # noqa: E402
     SCHEMA_V3,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 APPEND_PY = "/opt/itechsmart/audit_ledger/append.py"
-VERIFY_API = "http://127.0.0.1:8092"
 PUBLIC_VERIFY_URL = "https://verify.itechsmart.dev"
+# Read/verify APIs are the PUBLIC verifier (works from anywhere, no account).
+VERIFY_API = PUBLIC_VERIFY_URL
+# Sealing requires the canonical append service and is server-side only; override
+# via PROOFLINK_SEAL_API when running on a host that exposes it.
+import os as _os
+SEAL_API = _os.environ.get("PROOFLINK_SEAL_API", "http://127.0.0.1:8092")
 
 __all__ = [
     "seal", "verify_id", "verify_chain", "recent", "stats",
@@ -50,7 +55,9 @@ class ProofLinkError(Exception):
 
 def _get(path: str, timeout: int = 10) -> dict[str, Any]:
     try:
-        with urllib.request.urlopen(f"{VERIFY_API}{path}", timeout=timeout) as r:
+        _req = urllib.request.Request(f"{VERIFY_API}{path}",
+                                      headers={"User-Agent": f"prooflink-sdk/{__version__}"})
+        with urllib.request.urlopen(_req, timeout=timeout) as r:
             return json.loads(r.read().decode())
     except Exception as e:
         raise ProofLinkError(f"verify-api request failed ({path}): {e}") from e
@@ -65,6 +72,12 @@ def seal(action: str, *, category: str = "platform_fix", actor: str = "prooflink
     anchor=True submits to the Bitcoin OpenTimestamps calendars (slower);
     default False seals immediately (the chain is still cryptographically linked).
     """
+    import os as _os
+    if not _os.path.exists(APPEND_PY):
+        raise ProofLinkError(
+            "seal() requires the canonical ProofLink append service on this host "
+            "(server-side only). Verification/reads work anywhere; to seal, run on "
+            "an iTechSmart ledger host or set PROOFLINK_SEAL_API.")
     cmd = [
         "python3", APPEND_PY,
         "--category", category, "--actor", actor,
@@ -93,7 +106,7 @@ def verify_id(receipt_id: str) -> dict[str, Any]:
     """Look up a receipt by id or hash prefix via the local verify-api.
     Returns {ok, receipt} or raises. For cryptographic verification of a
     receipt you already hold, use verify()/verify_receipt() from .crypto."""
-    return _get(f"/api/v1/ledger/receipt/{receipt_id}")
+    return _get(f"/api/receipt/{receipt_id}")
 
 
 def fetch(id_or_hash: str, base_url: str = PUBLIC_VERIFY_URL, timeout: int = 30) -> dict[str, Any]:
@@ -116,12 +129,12 @@ def fetch(id_or_hash: str, base_url: str = PUBLIC_VERIFY_URL, timeout: int = 30)
 
 def verify_chain() -> dict[str, Any]:
     """Return live chain integrity: {chain_intact, chain_breaks, chain_links_verified, ...}."""
-    return _get("/api/v1/ledger/verify")
+    return _get("/api/chain")
 
 
 def recent(limit: int = 25) -> list[dict[str, Any]]:
-    return _get(f"/api/v1/ledger/recent?limit={int(limit)}").get("receipts", [])
+    return _get(f"/api/receipts?limit={int(limit)}").get("receipts", [])
 
 
 def stats() -> dict[str, Any]:
-    return _get("/api/v1/ledger/stats")
+    return _get("/api/stats")

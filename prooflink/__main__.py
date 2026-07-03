@@ -8,7 +8,7 @@
 import json
 import sys
 
-from . import seal, verify_id, verify_chain, recent, ProofLinkError
+from . import seal, verify_id, verify_chain, recent, stats, ProofLinkError
 
 
 def main(argv=None):
@@ -33,11 +33,16 @@ def main(argv=None):
                     action_parts.append(rest[i]); i += 1
             print(json.dumps(seal(" ".join(action_parts), **kw)))
         elif cmd == "verify":
-            print(json.dumps(verify_id(rest[0]), indent=2))
+            from . import fetch as _fetch
+            from .crypto import verify_receipt as _vr
+            _r = _fetch(rest[0])
+            print(json.dumps(_vr(_r), indent=2))
         elif cmd == "chain":
             print(json.dumps(verify_chain(), indent=2))
         elif cmd == "recent":
             print(json.dumps(recent(int(rest[0]) if rest else 25), indent=2))
+        elif cmd == "stats":
+            print(json.dumps(stats(), indent=2))
         else:
             print(f"unknown command: {cmd}\n{__doc__}", file=sys.stderr); return 2
     except (ProofLinkError, IndexError, ValueError) as e:

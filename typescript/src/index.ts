@@ -7,10 +7,10 @@
  * with zero third-party dependencies (Node 18+ built-in `crypto`).
  *
  * Quickstart (verify a receipt in <=5 lines):
- *   import { verify } from "prooflink-sdk";
+ *   import { verify, fetchReceipt } from "@itechsmart/prooflink";
  *   const ok = verify(receipt);            // boolean, true if all crypto checks pass
  *   // or, for detail:
- *   import { verifyReceipt } from "prooflink-sdk";
+ *   import { verifyReceipt } from "@itechsmart/prooflink";
  *   const result = verifyReceipt(receipt); // { valid, checks[], errors[] }
  *
  * Sealing (creating) receipts happens SERVER-SIDE via append.py against the canonical
@@ -173,49 +173,73 @@ export function verifyReceipt(receipt: Receipt, prevHash?: string): Verification
 
   let canon: Buffer | null = null;
 
-  // --- Check 1: HASH ---
+  const schemaV3 = String(receipt.schema_version ?? "") === "3.0";
+
+  // --- Check 1: HASH (v3 only — v2 hash_sha256 is a ledger-internal link,
+  //     computed pre-chain and not recomputable from the public form) ---
   try {
     if (typeof receipt.canonical_bytes !== "string") {
       throw new Error("missing/invalid canonical_bytes");
     }
     canon = Buffer.from(receipt.canonical_bytes, "hex");
-    const computed = sha256Hex(canon);
-    const expected = String(receipt.hash_sha256 ?? "").toLowerCase();
-    const passed = computed === expected;
-    checks.push({
-      name: "hash",
-      passed,
-      detail: passed
-        ? `sha256(canonical_bytes) matches hash_sha256 (${computed.slice(0, 16)}...)`
-        : `sha256(canonical_bytes)=${computed} != hash_sha256=${expected}`,
-    });
-    if (!passed) errors.push("hash mismatch");
+    if (schemaV3) {
+      const computed = sha256Hex(canon);
+      const expected = String(receipt.hash_sha256 ?? "").toLowerCase();
+      const passed = computed === expected;
+      checks.push({
+        name: "hash",
+        passed,
+        detail: passed
+          ? `sha256(canonical_bytes) matches hash_sha256 (${computed.slice(0, 16)}...)`
+          : `sha256(canonical_bytes)=${computed} != hash_sha256=${expected}`,
+      });
+      if (!passed) errors.push("hash mismatch");
+    } else {
+      // v2: bind via signature + signed-payload consistency instead.
+      try {
+        const signed = JSON.parse(canon.toString("utf-8")) as Record<string, unknown>;
+        const core = ["category", "actor", "subject", "action", "outcome", "timestamp"];
+        const mism = core.filter(
+          (k) => k in signed && (receipt as Record<string, unknown>)[k] !== undefined &&
+                 signed[k] !== (receipt as Record<string, unknown>)[k]);
+        const passed = mism.length === 0;
+        checks.push({
+          name: "payload_consistency",
+          passed,
+          detail: passed
+            ? "displayed core fields match the signed canonical payload"
+            : `signed-payload mismatch on: ${mism.join(", ")}`,
+        });
+        if (!passed) errors.push("signed-payload mismatch");
+      } catch (e) {
+        checks.push({ name: "payload_consistency", passed: false, detail: `error: ${(e as Error).message}` });
+        errors.push(`payload_consistency: ${(e as Error).message}`);
+      }
+    }
   } catch (e) {
     checks.push({ name: "hash", passed: false, detail: `error: ${(e as Error).message}` });
     errors.push(`hash: ${(e as Error).message}`);
   }
 
-  // --- Check 2: CANONICAL RE-DERIVATION ---
-  try {
-    const rederived = canonicalize(payloadOf(receipt));
-    const rederivedHex = rederived.toString("hex");
-    const expectedHex = String(receipt.canonical_bytes ?? "");
-    const passed = rederivedHex === expectedHex;
-    checks.push({
-      name: "canonical_rederivation",
-      passed,
-      detail: passed
-        ? `re-derived canonical bytes equal receipt.canonical_bytes (${rederived.length} bytes)`
-        : `re-derived bytes differ from receipt.canonical_bytes (got ${rederived.length}B, expected ${expectedHex.length / 2}B)`,
-    });
-    if (!passed) errors.push("canonical re-derivation mismatch");
-  } catch (e) {
-    checks.push({
-      name: "canonical_rederivation",
-      passed: false,
-      detail: `error: ${(e as Error).message}`,
-    });
-    errors.push(`canonical_rederivation: ${(e as Error).message}`);
+  // --- Check 2: CANONICAL RE-DERIVATION (v3 normative only) ---
+  if (schemaV3) {
+    try {
+      const rederived = canonicalize(payloadOf(receipt));
+      const rederivedHex = rederived.toString("hex");
+      const expectedHex = String(receipt.canonical_bytes ?? "");
+      const passed = rederivedHex === expectedHex;
+      checks.push({
+        name: "canonical_rederivation",
+        passed,
+        detail: passed
+          ? `re-derived canonical bytes equal receipt.canonical_bytes (${rederived.length} bytes)`
+          : `re-derived bytes differ (got ${rederived.length}B, expected ${expectedHex.length / 2}B)`,
+      });
+      if (!passed) errors.push("canonical re-derivation mismatch");
+    } catch (e) {
+      checks.push({ name: "canonical_rederivation", passed: false, detail: `error: ${(e as Error).message}` });
+      errors.push(`canonical_rederivation: ${(e as Error).message}`);
+    }
   }
 
   // --- Check 3: ED25519 SIGNATURE ---
@@ -304,3 +328,52 @@ export async function sealRemote(
   }
   return (await res.json()) as Receipt;
 }
+
+// ─────────────────────────────────────────────────────────────────────────
+// Public-ledger convenience layer (verify.itechsmart.dev, no account needed)
+// ─────────────────────────────────────────────────────────────────────────
+
+export const DEFAULT_LEDGER = "https://verify.itechsmart.dev";
+
+function nodeFetch() {
+  const f = (globalThis as unknown as {
+    fetch?: (input: string, init?: unknown) => Promise<{
+      ok: boolean; status: number; text(): Promise<string>; json(): Promise<unknown>;
+    }>;
+  }).fetch;
+  if (!f) throw new Error("global fetch unavailable — requires Node 18+");
+  return f;
+}
+
+async function getJson(url: string): Promise<unknown> {
+  const res = await nodeFetch()(url, { headers: { "User-Agent": "prooflink-sdk/1.1.0" } });
+  if (!res.ok) throw new Error(`GET ${url} -> HTTP ${res.status}`);
+  return res.json();
+}
+
+/** Fetch a single receipt from the public verifier by id or hash prefix. */
+export async function fetchReceipt(idOrHash: string, base = DEFAULT_LEDGER): Promise<Receipt> {
+  const d = (await getJson(`${base}/api/verify/${encodeURIComponent(idOrHash)}`)) as
+    { receipt?: Receipt } & Receipt;
+  return (d.receipt ?? d) as Receipt;
+}
+
+/** Fetch a receipt from the public ledger and fully verify it in one call. */
+export async function fetchAndVerify(idOrHash: string, base = DEFAULT_LEDGER):
+  Promise<VerificationResult & { id: string }> {
+  const r = await fetchReceipt(idOrHash, base);
+  return { id: idOrHash, ...verifyReceipt(r) };
+}
+
+/** Live ledger statistics: { total, chain_intact, ... }. */
+export async function stats(base = DEFAULT_LEDGER): Promise<Record<string, unknown>> {
+  return (await getJson(`${base}/api/stats`)) as Record<string, unknown>;
+}
+
+/** The newest N receipts (summary form) from the public ledger. */
+export async function recent(limit = 25, base = DEFAULT_LEDGER): Promise<Receipt[]> {
+  const d = (await getJson(`${base}/api/receipts?limit=${Math.floor(limit)}`)) as
+    { receipts?: Receipt[] };
+  return d.receipts ?? [];
+}
+
