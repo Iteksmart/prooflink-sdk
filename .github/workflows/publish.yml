@@ -1,7 +1,7 @@
 name: Publish
 
-# Publishes on a GitHub Release, or manually via the Actions tab.
-# Requires repo secrets: PYPI_TOKEN (PyPI API token), NPM_TOKEN (npm automation token).
+# PyPI via OIDC Trusted Publishing (no stored token).
+# npm via NPM_TOKEN repo secret.
 on:
   release:
     types: [published]
@@ -9,21 +9,21 @@ on:
 
 jobs:
   pypi:
-    name: Publish prooflink to PyPI
+    name: Publish prooflink to PyPI (Trusted Publishing)
     runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # REQUIRED for OIDC Trusted Publishing
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install build twine
+      - run: pip install build
       - run: python -m build
-      - run: twine check dist/*
-      - name: Upload
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: twine upload --non-interactive dist/*
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No password/token: PyPI verifies the GitHub OIDC identity.
 
   npm:
     name: Publish @itechsmart/prooflink to npm
