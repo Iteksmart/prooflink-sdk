@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const CORPUS =
   process.env.PL_CORPUS ||
-  "/tmp/claude-1000/-home-ubuntu/e8e5d523-7425-4edb-a9fd-4eb34154c203/scratchpad/pl/v3_samples.json";
+  join(__dirname, "fixtures", "v3_samples.json");
 
 const samples = JSON.parse(readFileSync(CORPUS, "utf-8"));
 
