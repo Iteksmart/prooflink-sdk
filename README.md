@@ -15,14 +15,14 @@ trust the math.*
 
 ## Framework examples
 
-Drop-in accountability for your stack — each uses a published SDK and the live public ledger. See [](./examples):
+Drop-in accountability for your stack — each uses a published SDK and the live public ledger. See [`examples/`](./examples):
 
 | Example | Stack |
 |---|---|
-| [FastAPI](./examples/fastapi) | verify endpoint +  seal decorator |
-| [Next.js](./examples/nextjs) |  route + live-integrity server component |
+| [FastAPI](./examples/fastapi) | verify endpoint + `@accountable` seal decorator |
+| [Next.js](./examples/nextjs) | `/api/verify/[id]` route + live-integrity server component |
 | [LangGraph](./examples/langgraph) | seal a receipt for every agent node, then verify the trail |
-| [CrewAI](./examples/crewai) |  seals a receipt per completed task |
+| [CrewAI](./examples/crewai) | `task_callback` seals a receipt per completed task |
 | [Claude Desktop](./examples/claude-desktop) | MCP config — 65 tools, verify receipts from Claude |
 
 
