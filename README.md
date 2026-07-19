@@ -1,3 +1,7 @@
+> [!WARNING]
+> **This repository has moved to [github.com/iTechSmartINC/prooflink-sdk](https://github.com/iTechSmartINC/prooflink-sdk)** as part of the iTechSmart Inc rebrand.
+> Please update your links and git remotes. This copy is kept as a redirect and is no longer updated.
+
 # ProofLink SDK
 
 [![CI](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/prooflink)](https://pypi.org/project/prooflink/) [![npm](https://img.shields.io/npm/v/%40itechsmart%2Fprooflink)](https://www.npmjs.com/package/@itechsmart/prooflink)
