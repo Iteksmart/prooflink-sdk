@@ -6,7 +6,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "node test/verify.test.mjs"
+    "test": "node test/verify.test.mjs && node test/trust.test.mjs"
   },
   "engines": {
     "node": ">=18"
@@ -37,7 +37,8 @@
     "dist",
     "bin",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "SECURITY.md"
   ],
   "bin": {
     "prooflink": "bin/cli.mjs"

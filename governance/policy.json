@@ -1,0 +1,58 @@
+{
+  "policy_id": "ITS-UAIO-001",
+  "version": "1.0.0",
+  "effective_date": "2026-10-28",
+  "timezone": "America/New_York",
+  "organization": "iTechSmart Inc.",
+  "status": "governing_internal_engineering_policy",
+  "loop": [
+    "detect",
+    "decide",
+    "do",
+    "prove"
+  ],
+  "failure_action": "escalate_without_mutation",
+  "controls": [
+    "AUTH-001",
+    "DETECT-001",
+    "DECIDE-001",
+    "TWIN-001",
+    "DO-001",
+    "PROVE-001",
+    "INTEROP-001",
+    "SYNC-001",
+    "TOOLS-001",
+    "RELEASE-001"
+  ],
+  "execution_modes": [
+    "manual",
+    "semi_automatic",
+    "automatic"
+  ],
+  "proof_states": [
+    "unsigned",
+    "signed_local",
+    "timestamp_pending",
+    "bitcoin_anchored",
+    "bitcoin_verified",
+    "invalid",
+    "revoked"
+  ],
+  "cryptography_target": [
+    "SHA-256",
+    "Ed25519",
+    "OpenTimestamps",
+    "Bitcoin"
+  ],
+  "tool_inventory": {
+    "requested_baseline_count": 66,
+    "verified_count": null,
+    "verification_status": "not_verified"
+  },
+  "runtime_enforcement_complete": false,
+  "preflight_is_certification": false,
+  "automatic_execution_limits": {
+    "minimum_calibrated_confidence": null,
+    "maximum_blast_radius_assets": null
+  }
+}

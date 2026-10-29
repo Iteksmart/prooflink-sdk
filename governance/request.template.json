@@ -1,0 +1,15 @@
+{
+  "policy_id": "ITS-UAIO-001",
+  "policy_version": "1.0.0",
+  "kind": "mutation",
+  "execution_mode": "manual",
+  "intent": {"tenant": "", "actor": "", "action": "", "targets": []},
+  "evidence": {},
+  "authorization": {"verified": false, "scope_matches": false, "expires_at": "", "evidence_ref": ""},
+  "detection": {"vantage_verified": false, "unknowns_disclosed": false, "evidence_ref": ""},
+  "decision": {"confidence": null, "confidence_calibrated": false, "evidence_ref": ""},
+  "twin": {"status": "not_run", "representative": false, "blast_radius_known": false, "rollback_validated": false, "action_digest": "", "expires_at": "", "evidence_ref": ""},
+  "execution": {"bounded": false, "cancellation_verified": false, "resource_reserve_verified": false, "quota_verified": false, "spend_authorized": false, "evidence_ref": ""},
+  "proof": {"state": "unsigned", "trusted_signature_verification": false, "trusted_key_id": "", "action_digest": "", "evidence_ref": ""},
+  "human_approval": {"verified": false, "expires_at": "", "evidence_ref": ""}
+}

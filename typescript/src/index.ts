@@ -76,6 +76,16 @@ export interface VerificationResult {
   valid: boolean;
   checks: CheckResult[];
   errors: string[];
+  signer_trusted?: boolean;
+  signature_valid?: boolean;
+  bitcoin_verified?: false;
+  verification_scope?: string;
+}
+
+/** Trust configuration comes from the caller, never from the receipt. Empty lists deny all keys. */
+export interface TrustOptions {
+  trustedPublicKeys?: readonly string[];
+  revokedPublicKeys?: readonly string[];
 }
 
 /**
@@ -138,6 +148,9 @@ const SPKI_ED25519_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
 /** Import a raw 32-byte Ed25519 public key (hex) as a Node KeyObject via SPKI DER. */
 export function importEd25519PublicKey(publicKeyHex: string): KeyObject {
+  if (typeof publicKeyHex !== "string" || !/^[0-9a-f]{64}$/i.test(publicKeyHex)) {
+    throw new Error("Ed25519 public key must be exactly 32 hexadecimal bytes");
+  }
   const raw = Buffer.from(publicKeyHex, "hex");
   if (raw.length !== 32) {
     throw new Error(`Ed25519 public key must be 32 bytes, got ${raw.length}`);
@@ -162,23 +175,38 @@ function sha256Hex(buf: Buffer): string {
  * @param receipt  the v3 receipt object
  * @param prevHash optional expected prev_hash for chain-link verification
  */
-export function verifyReceipt(receipt: Receipt, prevHash?: string): VerificationResult {
+export function verifyReceipt(receipt: Receipt, prevHash?: string, options: TrustOptions = {}): VerificationResult {
   const checks: CheckResult[] = [];
   const errors: string[] = [];
 
   // Basic structural sanity (throwing only for wholly malformed input).
-  if (receipt === null || typeof receipt !== "object") {
-    throw new TypeError("verifyReceipt: receipt must be an object");
+  if (receipt === null || typeof receipt !== "object" || Array.isArray(receipt)) {
+    return { valid: false, checks, errors: ["receipt must be an object"], bitcoin_verified: false };
   }
 
   let canon: Buffer | null = null;
 
   const schemaV3 = String(receipt.schema_version ?? "") === "3.0";
+  if (!schemaV3 && receipt.schema_version !== "2.0") {
+    return { valid: false, checks, errors: ["unsupported receipt schema"], bitcoin_verified: false };
+  }
+  let trusted: string[] = [];
+  let revoked: string[] = [];
+  try {
+    const parseKeys = (keys: readonly string[]) => {
+      if (!Array.isArray(keys) || keys.some(k => typeof k !== "string" || !/^[0-9a-f]{64}$/i.test(k))) throw new Error("invalid trusted/revoked key policy");
+      return keys.map(k => k.toLowerCase());
+    };
+    trusted = parseKeys(options.trustedPublicKeys === undefined ? [PUBLISHED_PUBLIC_KEY] : options.trustedPublicKeys);
+    revoked = parseKeys(options.revokedPublicKeys === undefined ? [] : options.revokedPublicKeys);
+  } catch (error) {
+    return { valid: false, checks, errors: [(error as Error).message], bitcoin_verified: false };
+  }
 
   // --- Check 1: HASH (v3 only — v2 hash_sha256 is a ledger-internal link,
   //     computed pre-chain and not recomputable from the public form) ---
   try {
-    if (typeof receipt.canonical_bytes !== "string") {
+    if (typeof receipt.canonical_bytes !== "string" || !/^(?:[0-9a-f]{2})+$/i.test(receipt.canonical_bytes)) {
       throw new Error("missing/invalid canonical_bytes");
     }
     canon = Buffer.from(receipt.canonical_bytes, "hex");
@@ -243,12 +271,21 @@ export function verifyReceipt(receipt: Receipt, prevHash?: string): Verification
   }
 
   // --- Check 3: ED25519 SIGNATURE ---
+  const signer = typeof receipt.signature?.public_key === "string" ? receipt.signature.public_key.toLowerCase() : "";
+  const signerTrusted = /^[0-9a-f]{64}$/.test(signer) && trusted.includes(signer) && !revoked.includes(signer);
+  checks.push({ name: "signer_trust", passed: signerTrusted, detail: signerTrusted ? "signer matches a configured trusted, non-revoked key" : "signer is missing, malformed, untrusted or revoked" });
+  if (!signerTrusted) errors.push("untrusted or revoked signing key");
   try {
     const sig = receipt.signature;
     if (!sig || typeof sig !== "object") throw new Error("missing signature block");
-    if (sig.algorithm && sig.algorithm !== "Ed25519") {
+    if (sig.algorithm !== "Ed25519") {
       throw new Error(`unsupported signature algorithm: ${sig.algorithm}`);
     }
+    const metadata = sig as unknown as Record<string, unknown>;
+    for (const field of ["signs", "signed_payload"]) {
+      if (field in metadata && metadata[field] !== "canonical_bytes") throw new Error("signature must cover canonical_bytes");
+    }
+    if (typeof sig.value !== "string" || !/^[0-9a-f]{128}$/i.test(sig.value)) throw new Error("invalid signature encoding");
     if (!canon) throw new Error("no canonical bytes to verify against");
     const key = importEd25519PublicKey(sig.public_key);
     const passed = edVerify(null, canon, key, Buffer.from(sig.value, "hex"));
@@ -283,15 +320,17 @@ export function verifyReceipt(receipt: Receipt, prevHash?: string): Verification
   }
 
   const valid = checks.every((c) => c.passed);
-  return { valid, checks, errors };
+  return { valid, checks, errors, signer_trusted: signerTrusted,
+    signature_valid: checks.some(c => c.name === "ed25519_signature" && c.passed), bitcoin_verified: false,
+    verification_scope: "receipt integrity and configured signer trust; Bitcoin and ledger inclusion not assessed" };
 }
 
 /**
  * Convenience one-liner: returns true iff all verification checks pass.
  * Never throws for a failed check; only for wholly malformed input.
  */
-export function verify(receipt: Receipt, prevHash?: string): boolean {
-  return verifyReceipt(receipt, prevHash).valid;
+export function verify(receipt: Receipt, prevHash?: string, options: TrustOptions = {}): boolean {
+  return verifyReceipt(receipt, prevHash, options).valid;
 }
 
 /** The published ProofLink v3 Ed25519 public key (lowercase hex). */

@@ -1,0 +1,17 @@
+name: UAIO policy preflight checks (not certification)
+on:
+  pull_request:
+    paths: ['governance/**', 'AGENTS.md', '.github/workflows/uaio-governance.yml']
+  push:
+    paths: ['governance/**', 'AGENTS.md', '.github/workflows/uaio-governance.yml']
+permissions:
+  contents: read
+jobs:
+  policy-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2, verified upstream tag
+      - name: Validate policy and adoption declarations
+        run: python3 governance/policy_gate.py --validate-policy
+      - name: Exercise fail-closed preflight behavior
+        run: python3 -m unittest discover -s governance/tests -v

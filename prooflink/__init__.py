@@ -10,7 +10,8 @@ The moat, as a library. Any iTechSmart app (or a customer's) can:
     v = prooflink.verify(r["id"])          # is this receipt in the ledger?
     chain = prooflink.verify_chain()       # is the whole chain intact?
 
-Zero third-party dependencies (stdlib only). seal() wraps the local append.py
+Network/seal helpers use the standard library; cryptographic verification requires
+the declared `cryptography` dependency. seal() wraps the local append.py
 (needs SEAL_TOKEN, read from /home/ubuntu/.secrets/prooflink.env by append.py);
 verify()/verify_chain()/recent() hit the read-only verify-api.
 """

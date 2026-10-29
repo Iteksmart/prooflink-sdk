@@ -1,0 +1,57 @@
+{
+  "policy_id": "ITS-UAIO-001",
+  "as_of": "2026-10-28",
+  "policy_adopted_in_workspace": true,
+  "all_runtime_gates_enforced": false,
+  "github_required_checks_configured": false,
+  "international_standard_or_certification": false,
+  "control_status": {
+    "AUTH-001": {
+      "status": "partial",
+      "evidence": "Pulse local operator/tenant boundaries and scope guards tested; portfolio-wide enforcement unverified"
+    },
+    "DETECT-001": {
+      "status": "partial",
+      "evidence": "Pulse native-host LAN audit completed 254 addresses; evidence/unknowns and invalidated Docker-vantage result preserved"
+    },
+    "DECIDE-001": {
+      "status": "not_verified",
+      "gap": "Portfolio-wide calibrated execution routing not verified"
+    },
+    "TWIN-001": {
+      "status": "not_verified",
+      "gap": "Mandatory representative twin enforcement on every mutation adapter not verified"
+    },
+    "DO-001": {
+      "status": "partial",
+      "evidence": "Pulse scan limits/cancellation and local resource caps exist; mutating adapter coverage unverified"
+    },
+    "PROVE-001": {
+      "status": "partial_source_fix_validated",
+      "evidence": "ProofLink Python/TypeScript SDK and v3 verifier now pin configured issuer keys and reject revoked/forged keys in offline tests. Website proof UI fail-open and fabricated anchor/chain claims repaired and component-tested.",
+      "gap": "Published packages and live service adoption not verified; complete trusted key lifecycle, independent Bitcoin verification and portfolio-wide runtime proof enforcement still outstanding.",
+      "local_evidence": "G:/itechsmart-audit-2026-10-28/readiness-wave-01/prooflink-trust-boundary-after.json"
+    },
+    "INTEROP-001": {
+      "status": "not_verified",
+      "gap": "Current MCP/A2A versions, Agent Cards and bypass resistance require integration tests"
+    },
+    "SYNC-001": {
+      "status": "not_verified",
+      "gap": "Tenant-safe learning and governed model/policy promotion not verified"
+    },
+    "TOOLS-001": {
+      "status": "not_verified",
+      "gap": "Claimed 66 tools need a versioned, permission-tested inventory"
+    },
+    "RELEASE-001": {
+      "status": "partial",
+      "evidence": "Historical readiness reports and actual Pulse scan evidence exist; full compliance matrix and external assessment outstanding"
+    }
+  },
+  "known_local_evidence": [
+    "G:/itechsmart-audit-2026-10-28/ACTUAL_SCAN_VALIDATION.json",
+    "G:/itechsmart-audit-2026-10-28/ACTUAL_SCAN_RESULTS.html",
+    "G:/itechsmart-audit-2026-10-28/READINESS_PLAN.html"
+  ]
+}

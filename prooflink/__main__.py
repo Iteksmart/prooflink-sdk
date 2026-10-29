@@ -36,7 +36,9 @@ def main(argv=None):
             from . import fetch as _fetch
             from .crypto import verify_receipt as _vr
             _r = _fetch(rest[0])
-            print(json.dumps(_vr(_r), indent=2))
+            result = _vr(_r)
+            print(json.dumps(result, indent=2))
+            return 0 if result["valid"] else 1
         elif cmd == "chain":
             print(json.dumps(verify_chain(), indent=2))
         elif cmd == "recent":

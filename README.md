@@ -1,5 +1,7 @@
 # ProofLink SDK
 
+> **Local security update — issuer trust:** verification now requires a configured trusted, non-revoked signing key. The receipt's embedded key alone does not establish issuer identity. The default pins the existing published iTechSmart key; custom issuers/rotation require explicit caller configuration. See [SECURITY.md](SECURITY.md). `valid` does not establish Bitcoin confirmation, ledger inclusion, the truth of an observation, or regulatory compliance. These source changes are not a claim that a published package or running service has been upgraded.
+
 [![CI](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Iteksmart/prooflink-sdk/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/prooflink)](https://pypi.org/project/prooflink/) [![npm](https://img.shields.io/npm/v/%40itechsmart%2Fprooflink)](https://www.npmjs.com/package/@itechsmart/prooflink)
 
 > **Every other AI-accountability standard is a PDF. ProofLink is a running ledger of

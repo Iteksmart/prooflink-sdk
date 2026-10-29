@@ -1,5 +1,7 @@
 # @itechsmart/prooflink
 
+> **Issuer trust security update:** `verifyReceipt`/`verify` require the configured trusted, non-revoked issuer key. Self-supplied receipt keys do not establish trust. See [SECURITY.md](SECURITY.md) for custom issuer, rotation and revocation options. This API does not verify Bitcoin confirmation or action outcomes. Local source changes are not a claim that the published npm release has been updated.
+
 [![npm](https://img.shields.io/npm/v/%40itechsmart%2Fprooflink)](https://www.npmjs.com/package/@itechsmart/prooflink)
 [![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 [![ledger](https://img.shields.io/badge/live_ledger-80%2C000%2B_receipts-22d3ee)](https://verify.itechsmart.dev)

@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
+from collections.abc import Iterable
 from typing import Any, Mapping, Optional
 
 try:
@@ -39,7 +41,7 @@ def canonicalize(payload: Mapping[str, Any]) -> bytes:
     """Canonical bytes per Standard v3 §3: sorted keys, no whitespace, UTF-8,
     non-ASCII left literal (ensure_ascii=False)."""
     return json.dumps(payload, sort_keys=True, separators=(",", ":"),
-                      ensure_ascii=False).encode("utf-8")
+                      ensure_ascii=False, allow_nan=False).encode("utf-8")
 
 
 class Check:
@@ -54,7 +56,9 @@ class Check:
 
 def verify_receipt(receipt: Mapping[str, Any],
                    prev_hash: Optional[str] = None,
-                   require_signature: bool = True) -> dict:
+                   require_signature: bool = True, *,
+                   trusted_public_keys: Optional[Iterable[str]] = None,
+                   revoked_public_keys: Iterable[str] = ()) -> dict:
     """Verify a v3 ProofLink receipt. Returns a structured result dict:
 
         {"valid": bool, "id": str, "schema_version": str,
@@ -67,6 +71,26 @@ def verify_receipt(receipt: Mapping[str, Any],
     """
     checks: list[Check] = []
     errors: list[str] = []
+
+    if not isinstance(receipt, Mapping):
+        return {"valid": False, "id": "", "schema_version": "", "checks": [],
+                "errors": ["receipt must be an object"], "bitcoin_verified": False}
+    # Trust comes from caller configuration, never from receipt-controlled fields.
+    try:
+        def key_set(values):
+            if isinstance(values, (str, bytes)):
+                raise ValueError("key policy must be a collection of 32-byte hexadecimal keys")
+            keys = set()
+            for value in values:
+                if not isinstance(value, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", value):
+                    raise ValueError("key policy contains an invalid Ed25519 public key")
+                keys.add(value.lower())
+            return keys
+        trusted = key_set((PUBLIC_KEY_HEX,) if trusted_public_keys is None else trusted_public_keys)
+        revoked = key_set(revoked_public_keys)
+    except (ValueError, TypeError) as exc:
+        return {"valid": False, "id": receipt.get("id", ""), "schema_version": receipt.get("schema_version", ""),
+                "checks": [], "errors": [str(exc)], "bitcoin_verified": False}
 
     schema = str(receipt.get("schema_version", ""))
     # v2.0 receipts sealed with the same crypto construction (embedded
@@ -84,6 +108,9 @@ def verify_receipt(receipt: Mapping[str, Any],
 
     # --- Check 1: hash integrity ---------------------------------------
     try:
+        value = receipt["canonical_bytes"]
+        if not isinstance(value, str) or not re.fullmatch(r"(?:[0-9a-fA-F]{2})+", value):
+            raise ValueError("canonical_bytes must be nonempty, even-length hexadecimal")
         canon = bytes.fromhex(receipt["canonical_bytes"])
     except Exception as e:
         checks.append(Check("hash_integrity", False, f"cannot decode canonical_bytes: {e}"))
@@ -117,8 +144,11 @@ def verify_receipt(receipt: Mapping[str, Any],
     # --- Check 2: canonical re-derivation (field tamper) ---------------
     if schema == SCHEMA_V3:
         payload = {k: v for k, v in receipt.items() if k not in EXCLUDE}
-        rederived = canonicalize(payload)
-        ok2 = rederived == canon
+        try:
+            rederived = canonicalize(payload)
+            ok2 = rederived == canon
+        except (TypeError, ValueError, RecursionError):
+            ok2 = False
         checks.append(Check("canonical_rederivation", ok2,
                             "re-derived canonical bytes match" if ok2
                             else "canonical re-derivation MISMATCH — a signed field was tampered"))
@@ -129,6 +159,15 @@ def verify_receipt(receipt: Mapping[str, Any],
 
     # --- Check 3: Ed25519 signature ------------------------------------
     sig = receipt.get("signature")
+    public_key = sig.get("public_key") if isinstance(sig, Mapping) else None
+    key_valid = isinstance(public_key, str) and bool(re.fullmatch(r"[0-9a-fA-F]{64}", public_key))
+    normalized_key = public_key.lower() if key_valid else ""
+    signer_trusted = bool(key_valid and normalized_key in trusted and normalized_key not in revoked)
+    checks.append(Check("signer_trust", signer_trusted,
+                        "signer matches an externally configured trusted, non-revoked key" if signer_trusted
+                        else "signer is missing, malformed, untrusted or revoked"))
+    if not signer_trusted:
+        errors.append("untrusted or revoked signing key")
     if not sig:
         checks.append(Check("ed25519_signature", not require_signature,
                             "receipt has no signature (unsigned)"))
@@ -137,6 +176,13 @@ def verify_receipt(receipt: Mapping[str, Any],
         checks.append(Check("ed25519_signature", False, "cryptography library unavailable"))
     else:
         try:
+            if sig.get("algorithm") != "Ed25519":
+                raise ValueError("signature algorithm must be Ed25519")
+            for field in ("signs", "signed_payload"):
+                if field in sig and sig[field] != "canonical_bytes":
+                    raise ValueError("signature must cover canonical_bytes")
+            if not key_valid or not isinstance(sig.get("value"), str) or not re.fullmatch(r"[0-9a-fA-F]{128}", sig["value"]):
+                raise ValueError("invalid Ed25519 key/signature encoding")
             pub = ed25519.Ed25519PublicKey.from_public_bytes(bytes.fromhex(sig["public_key"]))
             pub.verify(bytes.fromhex(sig["value"]), canon)
             checks.append(Check("ed25519_signature", True,
@@ -156,9 +202,16 @@ def verify_receipt(receipt: Mapping[str, Any],
 
     valid = all(c.passed for c in checks) and not errors
     return {"valid": valid, "id": receipt.get("id", ""), "schema_version": schema,
-            "checks": [c.as_dict() for c in checks], "errors": errors}
+            "checks": [c.as_dict() for c in checks], "errors": errors,
+            "signer_trusted": signer_trusted,
+            "signature_valid": any(c.name == "ed25519_signature" and c.passed for c in checks) and bool(sig),
+            "bitcoin_verified": False,
+            "verification_scope": "receipt_integrity_and_trusted_signature; optional expected chain link; Bitcoin and ledger inclusion not assessed"}
 
 
-def verify(receipt: Mapping[str, Any], prev_hash: Optional[str] = None) -> bool:
+def verify(receipt: Mapping[str, Any], prev_hash: Optional[str] = None, *,
+           trusted_public_keys: Optional[Iterable[str]] = None,
+           revoked_public_keys: Iterable[str] = ()) -> bool:
     """Boolean convenience wrapper around :func:`verify_receipt`."""
-    return verify_receipt(receipt, prev_hash=prev_hash)["valid"]
+    return verify_receipt(receipt, prev_hash=prev_hash, trusted_public_keys=trusted_public_keys,
+                          revoked_public_keys=revoked_public_keys)["valid"]
