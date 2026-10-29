@@ -46,7 +46,7 @@ every action.
 
 ## Built for the regulations
 
-| Regulation / framework | ProofLink field / mechanism that satisfies it |
+| Regulation / framework | Illustrative evidence support (not a compliance determination) |
 |---|---|
 | **EU AI Act (Reg. 2024/1689) Article 12** — automatic tamper-evident logging for high-risk AI | Append-only hash chain; every `seal()` records `timestamp`, `actor`, `action`, `subject`, `outcome`, `details` |
 | **NIST AI RMF 1.0 — MEASURE 2.7 / MANAGE 4.1** — monitoring evaluated & documented | `security` / `platform_fix` / `platform_health_check` receipts, signed & immutable; `actor` distinguishes system vs. agent vs. operator |
